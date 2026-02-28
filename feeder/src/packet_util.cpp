@@ -17,7 +17,7 @@ void packet_util::set_packet(Packet* packet)
     packet->ip.ihl = 5;
     packet->ip.version = 4;
     packet->ip.tos = 0x10;
-    packet->ip.tot_len = htons(sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(binary_struct));
+    packet->ip.tot_len = htons(sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(optiq));
     packet->ip.id = htons(current_id++);
     packet->ip.frag_off = htons(0x4000);
     packet->ip.ttl = 64;
@@ -29,7 +29,7 @@ void packet_util::set_packet(Packet* packet)
 
     packet->udp.source = htons(0x1F90);
     packet->udp.dest = htons(0x1F90);
-    packet->udp.len = htons(sizeof(struct udphdr) + sizeof(binary_struct));
+    packet->udp.len = htons(sizeof(struct udphdr) + sizeof(optiq));
     packet->udp.check = 0;
 }
 
@@ -59,9 +59,9 @@ uint64_t packet_util::xorshift64() {
     return fast_rand_state;
 }
 
-binary_struct packet_util::rand_struct()
+optiq packet_util::rand_struct()
 {
-    binary_struct msg;
+    optiq msg;
     uint64_t r = xorshift64();
     uint64_t r2 = xorshift64();
 

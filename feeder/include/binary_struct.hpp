@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <cstring>
 
-struct binary_struct 
+struct optiq 
 {
     // optiq header
     uint8_t version;
@@ -29,6 +29,6 @@ struct Packet {
     struct iphdr ip;
     struct udphdr udp;
 
-    binary_struct bs; 
+    optiq bs; 
 
 }__attribute__((packed));
