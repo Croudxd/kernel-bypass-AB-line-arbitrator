@@ -1,5 +1,10 @@
 #pragma once
 #include <cstdint>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <linux/udp.h>
+#include <arpa/inet.h>
+#include <cstring>
 
 struct binary_struct 
 {
@@ -11,9 +16,19 @@ struct binary_struct
     uint32_t sequence_number;
     uint64_t timestamp;
     // SBE payload
-    
     uint16_t message_type;
     uint16_t quantity;
     uint32_t price;
     uint64_t order_id;
+} __attribute__((packed));
+
+
+struct Packet {
+
+    struct ethhdr eth;
+    struct iphdr ip;
+    struct udphdr udp;
+
+    binary_struct bs; 
+
 }__attribute__((packed));
