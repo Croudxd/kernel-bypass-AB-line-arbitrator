@@ -14,7 +14,7 @@ class packet_util
         static uint64_t fast_rand_state;
 
     public:
-        static void set_packet(Packet* packet);
+        static void set_packet(Packet* packet_a, Packet* packet_b);
         static uint16_t calculate_ip_checksum(struct iphdr* ip);
         static uint64_t xorshift64();
         static optiq rand_struct();
