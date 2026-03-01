@@ -6,6 +6,7 @@
 #include <linux/udp.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
+#include "../../common/optiq.h"
 
 char LICENSE[] SEC("license") = "GPL";
 /**
@@ -24,31 +25,25 @@ Seen before → DROP, not seen → add to map and PASS
  *
  */
 
-struct optiq 
-{
-    // optiq header
-    __u8 version;
-    __u8 optiq_length;
-    __u16 service_id;
-    __u32 session_id;
-    __u32 sequence_number;
-    __u64 timestamp;
-    // SBE payload
-    __u16 message_type;
-    __u16 quantity;
-    __u32 price;
-    __u64 order_id;
-} __attribute__((packed));
 
 struct
 {
-    __uint(type, BPF_MAP_TYPE_HASH);
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, 1024);
     __type(key, __u32);    // session_id
     __type(value, __u8);   // just a flag, 1 = seen
+    __uint(pinning, LIBBPF_PIN_BY_NAME);
 } seen_sessions SEC(".maps");
 
-const int RETURN_CODE = XDP_PASS;
+struct {
+    __uint(type, BPF_MAP_TYPE_XSKMAP);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, __u32);
+    __uint(pinning, LIBBPF_PIN_BY_NAME);
+} xsks_map SEC(".maps");
+
+const int RETURN_CODE = XDP_DROP;
 
 SEC("xdp")
 int xdp_main(struct xdp_md *ctx)
@@ -110,11 +105,9 @@ int xdp_main(struct xdp_md *ctx)
     {
         __u8 seen = 1;
         bpf_map_update_elem(&seen_sessions, &op->session_id, &seen, BPF_ANY);
-        bpf_printk("session_id: %u\n", op->session_id);
-        return XDP_PASS;
     }
 
-    return XDP_PASS;
+    return bpf_redirect_map(&xsks_map, 0, 0);
 }
 
 
