@@ -184,6 +184,11 @@ Optionally add netem delay to line B to simulate a slower feed:
 sudo tc qdisc add dev vethB_src root netem delay 1ms
 ```
 
+or 
+
+```bash
+make setup
+```
 ### Building
 
 ```bash
@@ -197,6 +202,12 @@ cd receiver && make
 clang -O2 -g -target bpf -c xdp/src/xdp.c -o xdp/xdp.o
 ```
 
+or 
+
+```bash
+make build
+```
+
 ### Running
 
 ```bash
@@ -205,18 +216,28 @@ sudo ip link set vethA_dst xdpgeneric obj xdp/xdp.o sec xdp
 sudo ip link set vethB_dst xdpgeneric obj xdp/xdp.o sec xdp
 
 # 2. Start receiver (terminal 1)
-sudo ./receiver/receiver
+sudo ./userspace/userspace
 
 # 3. Start feeder (terminal 2)
-sudo ./feeder/main
+sudo ./feeder/feeder
 ```
+or 
 
+```bash
+make run
+```
 ### Cleanup
 
 ```bash
 sudo ip link set vethA_dst xdp off
 sudo ip link set vethB_dst xdp off
 sudo rm -f /sys/fs/bpf/seen_sessions /sys/fs/bpf/xsks_map
+```
+
+or 
+
+```bash
+make teardown
 ```
 
 ---
