@@ -1,5 +1,6 @@
 #include "binary_struct.hpp"
 #include "packet_util.hpp"
+#include "xdp.hpp"
 #include <cstdint>
 #include <iostream>
 #include <chrono>
@@ -16,8 +17,16 @@
 #include <sched.h>
 #include <errno.h>
 
-constexpr uint16_t PAGE_SIZE = 4096;
-constexpr uint16_t NUM_FRAMES = 2048;
+static unsigned char src_a[] = {0xf2,0x68,0x7f,0xcc,0x7f,0x57};
+static unsigned char dest_a[] = {0x06,0x4c,0x54,0xeb,0x06,0x9d};
+static const char* ip_src_a = "192.168.1.10";
+static const char* ip_dest_a = "192.168.1.20";
+
+ static unsigned char src_b[] = {0x72,0xc6,0xb3,0x65,0xc5,0x40};
+ static unsigned char dest_b[] = {0xb6,0x93,0xf6,0x05,0x52,0xc9};
+ static const char* ip_src_b = "192.168.2.10";
+ static const char* ip_dest_b = "192.168.2.20";
+
 
 int main()
 {
@@ -25,66 +34,20 @@ int main()
 
     auto start_time = std::chrono::steady_clock::now();
 
-    auto* bufs = mmap(NULL, NUM_FRAMES * PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,  -1, 0);
 
-	if (bufs == MAP_FAILED) 
-    {
-		printf("ERROR: mmap failed\n");
-		exit(EXIT_FAILURE);
-	}
+    xdp_feeder xdp_a;
+    xdp_a.xdp_setup("vethA_src");
 
-    xsk_ring_prod fill_ring{};
-    xsk_ring_cons comp_ring{};
-    xsk_ring_prod tx_ring{};
-    struct xsk_umem_config umem_cfg{};
-    umem_cfg.fill_size = XSK_RING_PROD__DEFAULT_NUM_DESCS * 2;
-    umem_cfg.comp_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
-    umem_cfg.frame_size = PAGE_SIZE;
-    umem_cfg.frame_headroom = XSK_UMEM__DEFAULT_FRAME_HEADROOM;
-
-    struct xsk_umem *umem;
-    int uret = xsk_umem__create(&umem, bufs, NUM_FRAMES * PAGE_SIZE, &fill_ring, &comp_ring, &umem_cfg);
-    if (uret) {
-        printf("ERROR: xsk_umem__create failed: %s\n", strerror(-uret));
-        exit(EXIT_FAILURE);
-    }
-
-    __u32 idx;
-    xsk_socket *sock;
-
-    struct xsk_socket_config cfg{};
-    cfg.rx_size = XSK_RING_CONS__DEFAULT_NUM_DESCS;
-    cfg.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
-    cfg.bind_flags = XDP_COPY;
-	int ret;
-
-	ret = xsk_socket__create(&sock, "vethA_src", 0, umem, nullptr, &tx_ring, &cfg);
-    if (ret) {
-        printf("ERROR: xsk_socket__create failed: %s\n", strerror(-ret));
-        exit(EXIT_FAILURE);
-    }
+    xdp_feeder xdp_b;
+    xdp_b.xdp_setup("vethB_src");
 
     while (true) 
     {
         auto current_time = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count() >= 10) break;
-        Packet a{};
-        Packet b{};
-        packet_util::set_packet(&a,&b);
 
-        uint32_t tx_idx;
-        memcpy(xsk_umem__get_data(bufs, 0), &a, sizeof(Packet));
-        xsk_ring_prod__reserve(&tx_ring, 1, &tx_idx);
-        struct xdp_desc * desc = xsk_ring_prod__tx_desc(&tx_ring, tx_idx);
-        desc->addr = 0;
-        desc->len = sizeof(Packet);
-
-        xsk_ring_prod__submit(&tx_ring, 1);
-        sendto(xsk_socket__fd(sock), NULL, 0, MSG_DONTWAIT, NULL, 0);
-        uint32_t comp_idx;
-        uint32_t completed = xsk_ring_cons__peek(&comp_ring, 2048, &comp_idx);
-        if (completed > 0)
-            xsk_ring_cons__release(&comp_ring, completed);
+        xdp_a.xdp_send(src_a, dest_a, ip_src_a, ip_dest_a);
+        xdp_b.xdp_send(src_b, dest_b, ip_src_b, ip_dest_b);
         count++;
     }
 

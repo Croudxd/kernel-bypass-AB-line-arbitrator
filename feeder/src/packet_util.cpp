@@ -5,54 +5,29 @@
 int16_t packet_util::current_id = 0;
 uint64_t packet_util::fast_rand_state = 88172645463325252ULL;
 
-void packet_util::set_packet(Packet* packet_a, Packet* packet_b)
+void packet_util::set_packet(Packet* packet, unsigned char eth_dest[], unsigned char eth_src[], const char* src_ip, const char* dst_ip)
 {
-    unsigned char eth_dest_a[] = { 0x06,0x4c,0x54,0xeb,0x06,0x9d };
-    unsigned char eth_src_a[] = { 0xf2,0x68,0x7f,0xcc,0x7f,0x57 };
+    memcpy(packet->eth.h_dest, eth_dest, 6);
+    memcpy(packet->eth.h_source, eth_src, 6);
+    packet->eth.h_proto = htons(ETH_P_IP);
 
-    memcpy(packet_a->eth.h_dest, eth_dest_a, 6);
-    memcpy(packet_a->eth.h_source, eth_src_a, 6);
-    packet_a->eth.h_proto = htons(ETH_P_IP);
+    packet->ip.ihl = 5;
+    packet->ip.version = 4;
+    packet->ip.tos = 0x10;
+    packet->ip.tot_len = htons(sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(optiq));
+    packet->ip.id = htons(current_id++);
+    packet->ip.frag_off = htons(0x4000);
+    packet->ip.ttl = 64;
+    packet->ip.protocol = 17;
+    packet->ip.saddr = inet_addr(src_ip);
+    packet->ip.daddr = inet_addr(dst_ip);
+    void* ip_ptr = &(packet->ip);
+    packet->ip.check = calculate_ip_checksum((struct iphdr*)ip_ptr);
 
-    packet_a->ip.ihl = 5;
-    packet_a->ip.version = 4;
-    packet_a->ip.tos = 0x10;
-    packet_a->ip.tot_len = htons(sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(optiq));
-    packet_a->ip.id = htons(current_id++);
-    packet_a->ip.frag_off = htons(0x4000);
-    packet_a->ip.ttl = 64;
-    packet_a->ip.protocol = 17;
-    packet_a->ip.saddr = inet_addr("192.168.1.10");
-    packet_a->ip.daddr = inet_addr("192.168.1.20");
-    void* ip_ptr = &(packet_a->ip);
-    packet_a->ip.check = calculate_ip_checksum((struct iphdr*)ip_ptr);
-
-    packet_a->udp.source = htons(0x1F90);
-    packet_a->udp.dest = htons(0x1F90);
-    packet_a->udp.len = htons(sizeof(struct udphdr) + sizeof(optiq));
-    packet_a->udp.check = 0;
-
-    memcpy(packet_b->eth.h_dest, eth_dest_a, 6);
-    memcpy(packet_b->eth.h_source, eth_src_a, 6);
-    packet_b->eth.h_proto = htons(ETH_P_IP);
-
-    packet_b->ip.ihl = 5;
-    packet_b->ip.version = 4;
-    packet_b->ip.tos = 0x10;
-    packet_b->ip.tot_len = htons(sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(optiq));
-    packet_b->ip.id = htons(current_id++);
-    packet_b->ip.frag_off = htons(0x4000);
-    packet_b->ip.ttl = 64;
-    packet_b->ip.protocol = 17;
-    packet_b->ip.saddr = inet_addr("192.168.1.10");
-    packet_b->ip.daddr = inet_addr("192.168.1.20");
-    void* ip_ptr_b = &(packet_b->ip);
-    packet_b->ip.check = calculate_ip_checksum((struct iphdr*)ip_ptr_b);
-
-    packet_b->udp.source = htons(0x1F90);
-    packet_b->udp.dest = htons(0x1F90);
-    packet_b->udp.len = htons(sizeof(struct udphdr) + sizeof(optiq));
-    packet_b->udp.check = 0;
+    packet->udp.source = htons(0x1F90);
+    packet->udp.dest = htons(0x1F90);
+    packet->udp.len = htons(sizeof(struct udphdr) + sizeof(optiq));
+    packet->udp.check = 0;
 }
 
 uint16_t packet_util::calculate_ip_checksum(struct iphdr* ip)
