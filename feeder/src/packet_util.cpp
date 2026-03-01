@@ -2,7 +2,6 @@
 #include <cstring>
 #include <netinet/in.h>
 
-uint64_t packet_util::fast_rand_state = 88172645463325252ULL;
 
 void packet_util::set_packet(Packet* packet, unsigned char eth_dest[], unsigned char eth_src[], const char* src_ip, const char* dst_ip)
 {

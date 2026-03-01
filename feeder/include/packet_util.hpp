@@ -10,9 +10,9 @@
 class packet_util
 {
     private:
-        __u32 current_id;
-        __u32 current_id_2;
-        static uint64_t fast_rand_state;
+        inline static __u32 current_id;
+        inline static __u32 current_id_2;
+        inline static uint64_t fast_rand_state = 88172645463325252ULL;
 
     public:
         static void set_packet(Packet* packet, unsigned char eth_dest[], unsigned char eth_src[], const char* src_ip, const char* dest_ip);
