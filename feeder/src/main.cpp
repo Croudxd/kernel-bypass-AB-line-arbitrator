@@ -1,7 +1,4 @@
-#include "binary_struct.hpp"
-#include "packet_util.hpp"
 #include "xdp.hpp"
-#include <cstdint>
 #include <iostream>
 #include <chrono>
 #include <linux/if_link.h>
@@ -15,7 +12,6 @@
 #include <bpf/libbpf.h>
 #include <arpa/inet.h>
 #include <sched.h>
-#include <errno.h>
 
 static unsigned char src_a[] = {0xf2,0x68,0x7f,0xcc,0x7f,0x57};
 static unsigned char dest_a[] = {0x06,0x4c,0x54,0xeb,0x06,0x9d};

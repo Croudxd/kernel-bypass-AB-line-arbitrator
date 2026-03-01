@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../include/binary_struct.hpp"
+#include "../../common/optiq.h"
 #include <cstdint>
 #include <linux/if_ether.h>
 #include <linux/ip.h>
@@ -10,7 +10,8 @@
 class packet_util
 {
     private:
-        static int16_t current_id;
+        __u32 current_id;
+        __u32 current_id_2;
         static uint64_t fast_rand_state;
 
     public:

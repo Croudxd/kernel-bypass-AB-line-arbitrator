@@ -2,7 +2,6 @@
 #include <cstring>
 #include <netinet/in.h>
 
-int16_t packet_util::current_id = 0;
 uint64_t packet_util::fast_rand_state = 88172645463325252ULL;
 
 void packet_util::set_packet(Packet* packet, unsigned char eth_dest[], unsigned char eth_src[], const char* src_ip, const char* dst_ip)
@@ -15,7 +14,7 @@ void packet_util::set_packet(Packet* packet, unsigned char eth_dest[], unsigned 
     packet->ip.version = 4;
     packet->ip.tos = 0x10;
     packet->ip.tot_len = htons(sizeof(struct iphdr) + sizeof(struct udphdr) + sizeof(optiq));
-    packet->ip.id = htons(current_id++);
+    packet->ip.id = htons(current_id_2++);
     packet->ip.frag_off = htons(0x4000);
     packet->ip.ttl = 64;
     packet->ip.protocol = 17;

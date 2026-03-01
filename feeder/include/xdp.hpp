@@ -1,8 +1,6 @@
-#include "binary_struct.hpp"
+#include "../../common/optiq.h"
 #include "packet_util.hpp"
 #include <cstdint>
-#include <iostream>
-#include <chrono>
 #include <linux/if_link.h>
 #include <stdlib.h>
 #include <sys/mman.h>
