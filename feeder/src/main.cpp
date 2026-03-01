@@ -33,8 +33,6 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 
-
-
     xsk_ring_prod fill_ring{};
     xsk_ring_cons comp_ring{};
     xsk_ring_prod tx_ring{};
@@ -66,24 +64,27 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    Packet a{};
-    Packet b{};
-    packet_util::set_packet(&a,&b);
-
-    uint32_t tx_idx;
-    memcpy(xsk_umem__get_data(bufs, 0), &a, sizeof(Packet));
-	xsk_ring_prod__reserve(&tx_ring, 1, &tx_idx);
-    struct xdp_desc * desc = xsk_ring_prod__tx_desc(&tx_ring, tx_idx);
-    desc->addr = 0;
-    desc->len = sizeof(Packet);
-
-    xsk_ring_prod__submit(&tx_ring, 1);
-    sendto(xsk_socket__fd(sock), NULL, 0, MSG_DONTWAIT, NULL, 0);
-
-    while (!true) 
+    while (true) 
     {
         auto current_time = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count() >= 10) break;
+        Packet a{};
+        Packet b{};
+        packet_util::set_packet(&a,&b);
+
+        uint32_t tx_idx;
+        memcpy(xsk_umem__get_data(bufs, 0), &a, sizeof(Packet));
+        xsk_ring_prod__reserve(&tx_ring, 1, &tx_idx);
+        struct xdp_desc * desc = xsk_ring_prod__tx_desc(&tx_ring, tx_idx);
+        desc->addr = 0;
+        desc->len = sizeof(Packet);
+
+        xsk_ring_prod__submit(&tx_ring, 1);
+        sendto(xsk_socket__fd(sock), NULL, 0, MSG_DONTWAIT, NULL, 0);
+        uint32_t comp_idx;
+        uint32_t completed = xsk_ring_cons__peek(&comp_ring, 2048, &comp_idx);
+        if (completed > 0)
+            xsk_ring_cons__release(&comp_ring, completed);
         count++;
     }
 
