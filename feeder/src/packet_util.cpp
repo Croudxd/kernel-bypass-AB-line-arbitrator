@@ -28,6 +28,8 @@ void packet_util::set_packet(Packet* packet, unsigned char eth_dest[], unsigned 
     packet->udp.dest = htons(0x1F90);
     packet->udp.len = htons(sizeof(struct udphdr) + sizeof(optiq));
     packet->udp.check = 0;
+    rand_struct(packet);
+
 }
 
 uint16_t packet_util::calculate_ip_checksum(struct iphdr* ip)
@@ -56,16 +58,16 @@ uint64_t packet_util::xorshift64() {
     return fast_rand_state;
 }
 
-optiq packet_util::rand_struct()
+void packet_util::rand_struct(Packet* pack)
 {
-    optiq msg;
+    optiq& msg = pack->bs;
     uint64_t r = xorshift64();
     uint64_t r2 = xorshift64();
 
     msg.version         = static_cast<uint8_t>((r % 4) + 1);
     msg.optiq_length    = static_cast<uint8_t>((r % 17) + 20);
     msg.service_id      = static_cast<uint16_t>((r >> 8) % 100 + 1);
-    msg.session_id      = static_cast<uint32_t>((r >> 16) % 9000 + 1000);
+    msg.session_id      = current_id++;
 
     msg.sequence_number = static_cast<uint32_t>(r % 10000000 + 1);
 
@@ -75,6 +77,4 @@ optiq packet_util::rand_struct()
     msg.quantity        = static_cast<uint16_t>((r2 >> 16) % 500 + 1);
     msg.price           = static_cast<uint32_t>((r2 >> 32) % 40001 + 10000);
     msg.order_id        = (xorshift64() % 999999999ULL) + 1;
-
-    return msg;
 }

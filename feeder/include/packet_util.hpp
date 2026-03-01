@@ -17,5 +17,5 @@ class packet_util
         static void set_packet(Packet* packet, unsigned char eth_dest[], unsigned char eth_src[], const char* src_ip, const char* dest_ip);
         static uint16_t calculate_ip_checksum(struct iphdr* ip);
         static uint64_t xorshift64();
-        static optiq rand_struct();
+        static void rand_struct(Packet* pack);
 };

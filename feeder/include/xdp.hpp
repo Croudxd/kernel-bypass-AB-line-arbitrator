@@ -58,8 +58,9 @@ class xdp_feeder
 
         void xdp_send(unsigned char src[],  unsigned char dest[], const char* ip_src, const char* ip_dest )
         {
-            packet_util::set_packet(&pack, src, dest, ip_src, ip_dest);
-            priv_send(pack);
+            Packet pk;
+            packet_util::set_packet(&pk, src, dest, ip_src, ip_dest);
+            priv_send(pk);
         }
 
 
@@ -80,6 +81,7 @@ class xdp_feeder
             if (completed > 0)
                 xsk_ring_cons__release(&comp_ring, completed);
         }
+
        void * bufs; 
        xsk_ring_prod fill_ring{};
        xsk_ring_cons comp_ring{};
@@ -87,10 +89,8 @@ class xdp_feeder
        struct xsk_umem_config umem_cfg{};
        struct xsk_umem *umem;
 
-
        xsk_socket *sock;
 
        struct xsk_socket_config cfg{};
 
-       Packet pack{};
 };
